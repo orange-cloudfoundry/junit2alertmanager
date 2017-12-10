@@ -22,11 +22,11 @@ const (
 )
 
 var version_major int = 1
-var version_minor int = 0
+var version_minor int = 1
 var version_build int = 0
 
 type AppJunit struct {
-	Target       string
+	Targets      []string
 	JunitFile    string
 	AlertName    string
 	GeneratorUrl string
@@ -42,9 +42,9 @@ func main() {
 	defaultDuration, _ := time.ParseDuration("3m")
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
-			Name:   "target, t",
-			EnvVar: "ALERT_MANAGER_HOST",
-			Usage:  "Target your alertmanager, e.g: http://127.0.0.1:8080",
+			Name:   "targets, t",
+			EnvVar: "ALERT_MANAGER_HOSTS",
+			Usage:  "Target one or a list of alertmanager(s) (e.g: http://127.0.0.1:8080,http://127.0.0.1:8080), it will assume that alertmanager are in cluster and will only fallback to next alertmanager when first failed",
 		},
 		cli.StringFlag{
 			Name:  "junit, f",
@@ -75,8 +75,8 @@ func main() {
 	app.Run(os.Args)
 }
 func run(c *cli.Context) error {
-	if c.GlobalString("target") == "" {
-		return fmt.Errorf("You must set a target")
+	if c.GlobalString("targets") == "" {
+		return fmt.Errorf("You must set, at least, one target")
 	}
 	if c.GlobalString("junit") == "" {
 		return fmt.Errorf("You must set a junit path file")
@@ -99,7 +99,7 @@ func run(c *cli.Context) error {
 		},
 	}
 	appJunit := &AppJunit{
-		Target:       c.GlobalString("target"),
+		Targets:      strings.Split(c.GlobalString("targets"), ","),
 		JunitFile:    c.GlobalString("junit"),
 		AlertName:    c.GlobalString("alert-name"),
 		GeneratorUrl: c.GlobalString("generator-url"),
@@ -114,18 +114,33 @@ func (a AppJunit) sendAlerts() error {
 		return err
 	}
 	alerts := a.testSuite2Alerts(testSuite)
+	return a.sendAlertsToTargets(alerts)
+}
+func (a AppJunit) sendAlertsToTargets(alerts []promtpl.Alert) error {
 	b, err := json.Marshal(alerts)
 	if err != nil {
 		return err
 	}
-	resp, err := a.Client.Post(a.Target+ALERT_API, "application/json", bytes.NewBuffer(b))
-	if err != nil {
-		return err
+	errMessage := ""
+	for _, target := range a.Targets {
+		target = strings.TrimSpace(target)
+		resp, err := a.Client.Post(target+ALERT_API, "application/json", bytes.NewBuffer(b))
+		if err != nil {
+			errMessage += fmt.Sprintf("Error on target '%s': %s\n", target, err.Error())
+			continue
+		}
+		if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+			b, _ = ioutil.ReadAll(resp.Body)
+			errMessage += fmt.Sprintf("Error on target '%s' when sending alerts (code: %d): %s\n",
+				target, resp.StatusCode, string(b))
+			resp.Body.Close()
+			continue
+		}
+		resp.Body.Close()
+		break
 	}
-	defer resp.Body.Close()
-	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		b, _ = ioutil.ReadAll(resp.Body)
-		return fmt.Errorf("Error when sending alerts (code: %d): %s", resp.StatusCode, string(b))
+	if errMessage != "" {
+		return fmt.Errorf(errMessage)
 	}
 	return nil
 }
