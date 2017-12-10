@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
-	"github.com/onsi/ginkgo/reporters"
 	promtpl "github.com/prometheus/alertmanager/template"
 	"github.com/urfave/cli"
 	"io/ioutil"
@@ -144,7 +143,7 @@ func (a AppJunit) sendAlertsToTargets(alerts []promtpl.Alert) error {
 	}
 	return nil
 }
-func (a AppJunit) testSuite2Alerts(testSuite reporters.JUnitTestSuite) []promtpl.Alert {
+func (a AppJunit) testSuite2Alerts(testSuite JUnitTestSuite) []promtpl.Alert {
 	alerts := make([]promtpl.Alert, 0)
 	for i, testCase := range testSuite.TestCases {
 		if testCase.Skipped != nil || testCase.FailureMessage == nil {
@@ -154,7 +153,7 @@ func (a AppJunit) testSuite2Alerts(testSuite reporters.JUnitTestSuite) []promtpl
 	}
 	return alerts
 }
-func (a AppJunit) testCase2Alert(testCase reporters.JUnitTestCase, suffixAlert string) promtpl.Alert {
+func (a AppJunit) testCase2Alert(testCase JUnitTestCase, suffixAlert string) promtpl.Alert {
 
 	endsAt := time.Unix(0, 0)
 	if a.Expire != time.Duration(0) {
@@ -177,8 +176,8 @@ func (a AppJunit) testCase2Alert(testCase reporters.JUnitTestCase, suffixAlert s
 		},
 	}
 }
-func (a AppJunit) junit2TestSuite() (reporters.JUnitTestSuite, error) {
-	var testSuite reporters.JUnitTestSuite
+func (a AppJunit) junit2TestSuite() (JUnitTestSuite, error) {
+	var testSuite JUnitTestSuite
 	b, err := ioutil.ReadFile(a.JunitFile)
 	if err != nil {
 		return testSuite, err
@@ -189,7 +188,7 @@ func (a AppJunit) junit2TestSuite() (reporters.JUnitTestSuite, error) {
 	}
 	return testSuite, nil
 }
-func (a AppJunit) generateAlertName(testCase reporters.JUnitTestCase, suffixAlert string) string {
+func (a AppJunit) generateAlertName(testCase JUnitTestCase, suffixAlert string) string {
 	alertName := a.AlertName + "-" + testCase.ClassName
 	return strings.Replace(alertName, " ", "-", -1) + suffixAlert
 }

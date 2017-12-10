@@ -1,0 +1,38 @@
+{
+	"comment": "",
+	"ignore": "test",
+	"package": [
+		{
+			"checksumSHA1": "CWaTRe4iq+9IwC4DrTwyX0mnWnQ=",
+			"path": "github.com/prometheus/alertmanager/template",
+			"revision": "b5af74942328b2e535e270c3c9a7f8e2ef0952a4",
+			"revisionTime": "2017-01-17T15:19:38Z"
+		},
+		{
+			"checksumSHA1": "LNJjU60tTzOpiQ0IAAvmXMguwmA=",
+			"path": "github.com/prometheus/alertmanager/template/internal/deftmpl",
+			"revision": "b5af74942328b2e535e270c3c9a7f8e2ef0952a4",
+			"revisionTime": "2017-01-17T15:19:38Z"
+		},
+		{
+			"checksumSHA1": "CaQKYEzkxU+fdJvyaSIect/pDpw=",
+			"path": "github.com/prometheus/alertmanager/types",
+			"revision": "b5af74942328b2e535e270c3c9a7f8e2ef0952a4",
+			"revisionTime": "2017-01-17T15:19:38Z"
+		},
+		{
+			"checksumSHA1": "bRBAUlwQCpJvDqeLb8fq2ZopqkY=",
+			"origin": "github.com/prometheus/alertmanager/vendor/github.com/prometheus/common/model",
+			"path": "github.com/prometheus/common/model",
+			"revision": "b5af74942328b2e535e270c3c9a7f8e2ef0952a4",
+			"revisionTime": "2017-01-17T15:19:38Z"
+		},
+		{
+			"checksumSHA1": "LMu1NsthSqcXfKu0m6YGPAmwBcY=",
+			"path": "github.com/urfave/cli",
+			"revision": "0bdeddeeb0f650497d603c4ad7b20cfe685682f6",
+			"revisionTime": "2016-11-22T04:36:10Z"
+		}
+	],
+	"rootPath": "github.com/orange-cloudfoundry/junit2alertmanager"
+}
