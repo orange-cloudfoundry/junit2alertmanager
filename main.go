@@ -148,7 +148,7 @@ func (a AppJunit) sendAlertsToTargets(alerts []promtpl.Alert) error {
 	if errMessages != "" {
 		return fmt.Errorf(errMessages)
 	}
-	log.Info("Finished sending %d alerts", len(alerts))
+	log.Infof("Finished sending %d alerts", len(alerts))
 	return nil
 }
 func (a AppJunit) testSuite2Alerts(testSuite JUnitTestSuite) []promtpl.Alert {
