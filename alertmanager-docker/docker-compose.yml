@@ -1,0 +1,7 @@
+alertmanager:
+  image: "prom/alertmanager:latest"
+  ports:
+    - "9093:9093"
+  volumes:
+    - "/tmp/prom:/alertmanager"
+    - "./alertmanager.conf.yml:/etc/alertmanager/config.yml"
