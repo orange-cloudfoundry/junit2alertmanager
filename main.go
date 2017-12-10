@@ -114,6 +114,10 @@ func (a AppJunit) sendAlerts() error {
 		return err
 	}
 	alerts := a.testSuite2Alerts(testSuite)
+	if len(alerts) == 0 {
+		log.Info("No alerts to send")
+		return nil
+	}
 	return a.sendAlertsToTargets(alerts)
 }
 func (a AppJunit) sendAlertsToTargets(alerts []promtpl.Alert) error {
@@ -126,6 +130,7 @@ func (a AppJunit) sendAlertsToTargets(alerts []promtpl.Alert) error {
 		target = strings.TrimSpace(target)
 		entry := log.WithField("target", target)
 		entry.Infof("Sending %d alerts...", len(alerts))
+
 		resp, err := a.Client.Post(target+ALERT_API, "application/json", bytes.NewBuffer(b))
 		if err != nil {
 			errMessage := fmt.Sprintf("Error on target '%s': %s\n", target, err.Error())
