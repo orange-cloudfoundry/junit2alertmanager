@@ -22,8 +22,8 @@ const (
 )
 
 var version_major int = 1
-var version_minor int = 1
-var version_build int = 1
+var version_minor int = 2
+var version_build int = 0
 
 type AppJunit struct {
 	Targets      []string
@@ -32,6 +32,7 @@ type AppJunit struct {
 	GeneratorUrl string
 	Expire       time.Duration
 	Client       *http.Client
+	Labels       []string
 }
 
 func main() {
@@ -65,6 +66,10 @@ func main() {
 			Name:  "expire, e",
 			Value: defaultDuration,
 			Usage: "set expiration for alerts",
+		},
+		cli.StringSliceFlag{
+			Name:  "labels, l",
+			Usage: "You can give your own labels to alert, e.g.: -l label1=value1 -l label2=value2",
 		},
 		cli.BoolFlag{
 			Name:  "skip-insecure, k",
@@ -105,6 +110,7 @@ func run(c *cli.Context) error {
 		GeneratorUrl: c.GlobalString("generator-url"),
 		Expire:       c.GlobalDuration("expire"),
 		Client:       client,
+		Labels:       c.GlobalStringSlice("labels"),
 	}
 	return appJunit.sendAlerts()
 }
@@ -178,12 +184,19 @@ func (a AppJunit) testCase2Alert(testCase JUnitTestCase, suffixAlert string) pro
 	if testCase.FailureMessage != nil {
 		description = testCase.FailureMessage.Message
 	}
+	labels := make(promtpl.KV)
+	labels["alertname"] = a.generateAlertName(testCase, suffixAlert)
+	for _, labelRaw := range a.Labels {
+		label := strings.Split(labelRaw, "=")
+		labels[label[0]] = ""
+		if len(label) > 1 {
+			labels[label[0]] = strings.Join(label[1:], "=")
+		}
+	}
 	return promtpl.Alert{
-		StartsAt: time.Now(),
-		EndsAt:   endsAt,
-		Labels: promtpl.KV{
-			"alertname": a.generateAlertName(testCase, suffixAlert),
-		},
+		StartsAt:     time.Now(),
+		EndsAt:       endsAt,
+		Labels:       labels,
 		GeneratorURL: a.GeneratorUrl,
 		Annotations: promtpl.KV{
 			"summary":     testCase.Name,
