@@ -7,6 +7,7 @@ import (
 	"encoding/xml"
 	"fmt"
 	promtpl "github.com/prometheus/alertmanager/template"
+	log "github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
 	"io/ioutil"
 	"net"
@@ -22,7 +23,7 @@ const (
 
 var version_major int = 1
 var version_minor int = 1
-var version_build int = 0
+var version_build int = 1
 
 type AppJunit struct {
 	Targets      []string
@@ -120,27 +121,34 @@ func (a AppJunit) sendAlertsToTargets(alerts []promtpl.Alert) error {
 	if err != nil {
 		return err
 	}
-	errMessage := ""
+	errMessages := ""
 	for _, target := range a.Targets {
 		target = strings.TrimSpace(target)
+		entry := log.WithField("target", target)
+		entry.Info("Sending alerts...")
 		resp, err := a.Client.Post(target+ALERT_API, "application/json", bytes.NewBuffer(b))
 		if err != nil {
-			errMessage += fmt.Sprintf("Error on target '%s': %s\n", target, err.Error())
+			errMessage := fmt.Sprintf("Error on target '%s': %s\n", target, err.Error())
+			entry.Errorf("%s, trying next target.", errMessage)
+			errMessages += errMessage
 			continue
 		}
 		if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 			b, _ = ioutil.ReadAll(resp.Body)
-			errMessage += fmt.Sprintf("Error on target '%s' when sending alerts (code: %d): %s\n",
+			errMessage := fmt.Sprintf("Error on target '%s' when sending alerts (code: %d): %s\n",
 				target, resp.StatusCode, string(b))
+			entry.Errorf("%s, trying next target.", errMessage)
+			errMessages += errMessage
 			resp.Body.Close()
 			continue
 		}
 		resp.Body.Close()
 		break
 	}
-	if errMessage != "" {
-		return fmt.Errorf(errMessage)
+	if errMessages != "" {
+		return fmt.Errorf(errMessages)
 	}
+	log.Info("Finished sending alerts")
 	return nil
 }
 func (a AppJunit) testSuite2Alerts(testSuite JUnitTestSuite) []promtpl.Alert {
@@ -149,7 +157,9 @@ func (a AppJunit) testSuite2Alerts(testSuite JUnitTestSuite) []promtpl.Alert {
 		if testCase.Skipped != nil || testCase.FailureMessage == nil {
 			continue
 		}
-		alerts = append(alerts, a.testCase2Alert(testCase, fmt.Sprintf("-%d", i)))
+		alert := a.testCase2Alert(testCase, fmt.Sprintf("-%d", i))
+		log.Infof("Alert %s created.", alert.Labels["alertname"])
+		alerts = append(alerts, alert)
 	}
 	return alerts
 }
