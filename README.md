@@ -25,7 +25,8 @@ COMMANDS:
      help, h  Shows a list of commands or help for one command
 
 GLOBAL OPTIONS:
-   --targets value, -t value        Target one or a list of alertmanager(s) (e.g: http://127.0.0.1:8080,http://127.0.0.1:8080), it will assume that alertmanager are in cluster and will only fallback to next alertmanager when first failed [$ALERT_MANAGER_HOSTS]
+   --targets value, -t value        Target one or a list of alertmanager(s) (e.g: http://127.0.0.1:8080,http://127.0.0.1:8080), 
+   it will assume that alertmanager are in cluster and will only fallback to next alertmanager when first failed [$ALERT_MANAGER_HOSTS]
    --junit value, -f value          path to a junit xml file (default: "junit.xml")
    --alert-name value, -n value     prefix to alertname label in alert
    --generator-url value, -g value  url to set as generator url
